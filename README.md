@@ -10,8 +10,8 @@ This is generally sufficient. Where it becomes insufficient currently is with
 autoloaded options.
 
 When the alloptions cache bucket exceeds 1MB, it no longer works, and this can
-cause things to bring in interesting and unexpected ways.  This plugin aims to
-inform store administrators when there is an issue, empower them to fix the issue manually - and ideally, fix it for them without them having to worry about it.
+cause things to break in interesting and unexpected ways.  This plugin aims to
+inform site administrators when there is an issue, empower them to fix the issue manually - and ideally, fix it for them without them having to worry about it.
 
 # TODOS
 
