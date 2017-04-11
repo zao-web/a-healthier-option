@@ -81,30 +81,30 @@ function aho_settings_section_callback() {
 
 function aho_options_page() {
 	?>
-    <h2><?php _e( 'Options', 'a-healthier-option' ); ?></h2>
 
-    <form method="post">
-        <input type="hidden" name="page" value="aho_list_table">
+	<div class="wrap">
+		<form action='options.php' method='post'>
 
-        <?php
-        $list_table = new AHO_Options_List_Table();
-        $list_table->prepare_items();
-        $list_table->search_box( 'search', 'search_id' );
-        $list_table->display();
-        ?>
-    </form>
+			<h2>A Healthier Options Table</h2>
 
-	<form action='options.php' method='post'>
+			<?php
+				settings_fields( 'aho_settings' );
+				do_settings_sections( 'aho_settings' );
+				submit_button();
+			?>
 
-		<h2>A Healthier Options Table</h2>
+		</form>
 
-		<?php
-			settings_fields( 'aho_settings' );
-			do_settings_sections( 'aho_settings' );
-			submit_button();
-		?>
+	    <form method="post">
+	        <input type="hidden" name="page" value="aho_list_table">
+	        <?php
+		        $list_table = new AHO_Options_List_Table();
+		        $list_table->prepare_items();
+		        $list_table->display();
+	        ?>
+    	</form>
 
-	</form>
+</div>
 	<?php
 }
 
@@ -126,14 +126,12 @@ function aho_get_all_option( $args = array() ) {
     );
 
     $args      = wp_parse_args( $args, $defaults );
-    $cache_key = 'option-all';
-    $items     = wp_cache_get( $cache_key, 'a-healthier-option' );
 
-    if ( false === $items ) {
-        $items = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->options . ' ORDER BY ' . $args['orderby'] .' ' . $args['order'] .' LIMIT ' . $args['offset'] . ', ' . $args['number'] );
+	if ( 'size' === $args['orderby'] ) {
+		$args['orderby'] = 'CHAR_LENGTH(option_value)';
+	}
 
-        wp_cache_set( $cache_key, $items, 'a-healthier-option' );
-    }
+    $items = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->options . ' ORDER BY ' . $args['orderby'] .' ' . $args['order'] .' LIMIT ' . $args['offset'] . ', ' . $args['number'] );
 
     return $items;
 }
@@ -170,7 +168,7 @@ class AHO_Options_List_Table extends WP_List_Table {
         ) );
     }
 
-    function get_table_classes() {
+    public function get_table_classes() {
         return array( 'widefat', 'fixed', 'striped', $this->_args['plural'] );
     }
 
@@ -179,9 +177,17 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return void
      */
-    function no_items() {
+    public function no_items() {
         _e( 'No options found', 'a-healthier-option' );
     }
+
+	public function get_sortable_columns() {
+		return array(
+			array( 'option_name', false ),
+			array( 'autoload', false ),
+			array( 'size', false )
+		);
+	}
 
     /**
      * Default column values if no callback found
@@ -243,19 +249,6 @@ class AHO_Options_List_Table extends WP_List_Table {
         $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this item', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 
         return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'admin.php?page=options-health&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
-    }
-
-    /**
-     * Get sortable columns
-     *
-     * @return array
-     */
-    function get_sortable_columns() {
-        $sortable_columns = array(
-            'name' => array( 'name', 'size', 'autoload' ),
-        );
-
-        return $sortable_columns;
     }
 
     /**
