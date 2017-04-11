@@ -11,7 +11,7 @@ Domain Path:
  */
 
 /*
- Copyright 2010-2012 by Zao and the contributors
+ Copyright by Zao and the contributors
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
@@ -76,12 +76,12 @@ function aho_text_field_0_render() {
 }
 
 function aho_settings_section_callback() {
-	_e( 'Depending', 'aho' );
+	_e( 'Depending on the nature of your database server, the settings below should be helpful for improving the performance of your options table.', 'aho' );
 }
 
 function aho_options_page() {
 	?>
-    <h2><?php _e( 'Options', 'a-healthier-option' ); ?> <a href="<?php echo admin_url( 'admin.php?page=options-health&action=new' ); ?>" class="add-new-h2"><?php _e( 'Add New', 'a-healthier-option' ); ?></a></h2>
+    <h2><?php _e( 'Options', 'a-healthier-option' ); ?></h2>
 
     <form method="post">
         <input type="hidden" name="page" value="aho_list_table">
@@ -96,12 +96,12 @@ function aho_options_page() {
 
 	<form action='options.php' method='post'>
 
-		<h2>A Healthier Option</h2>
+		<h2>A Healthier Options Table</h2>
 
 		<?php
-		settings_fields( 'aho_settings' );
-		do_settings_sections( 'aho_settings' );
-		submit_button();
+			settings_fields( 'aho_settings' );
+			do_settings_sections( 'aho_settings' );
+			submit_button();
 		?>
 
 	</form>
@@ -121,7 +121,7 @@ function aho_get_all_option( $args = array() ) {
     $defaults = array(
         'number'     => 20,
         'offset'     => 0,
-        'orderby'    => 'id',
+        'orderby'    => 'option_id',
         'order'      => 'ASC',
     );
 
@@ -239,10 +239,10 @@ class AHO_Options_List_Table extends WP_List_Table {
     function column_option_name( $item ) {
 
         $actions           = array();
-        $actions['edit']   = sprintf( '<a href="%s" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=edit&id=' . $item->id ), $item->id, __( 'Edit this item', 'a-healthier-option' ), __( 'Edit', 'a-healthier-option' ) );
-        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->id ), $item->id, __( 'Delete this item', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
+        $actions['edit']   = sprintf( '<a href="%s" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=edit&id=' . $item->option_id ), $item->option_id, __( 'Edit this item', 'a-healthier-option' ), __( 'Edit', 'a-healthier-option' ) );
+        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this item', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 
-        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'admin.php?page=options-health&action=view&id=' . $item->id ), $item->option_name, $this->row_actions( $actions ) );
+        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'admin.php?page=options-health&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
     }
 
     /**
@@ -279,7 +279,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      */
     function column_cb( $item ) {
         return sprintf(
-            '<input type="checkbox" name="option_id[]" value="%d" />', $item->id
+            '<input type="checkbox" name="option_id[]" value="%d" />', $item->option_id
         );
     }
 
