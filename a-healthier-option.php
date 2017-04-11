@@ -149,6 +149,10 @@ function aho_get_option_count() {
     return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $wpdb->options );
 }
 
+function aho_get_all_options_size() {
+	return size_format( mb_strlen( serialize( wp_load_alloptions() ) ) );
+}
+
 if ( ! class_exists ( 'WP_List_Table' ) ) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
@@ -193,8 +197,11 @@ class AHO_Options_List_Table extends WP_List_Table {
             case 'option_name':
                 return $item->option_name;
 
-            case 'option_value':
-                return $item->option_value;
+	        case 'option_value':
+	            return $item->option_value;
+
+            case 'size':
+                return number_format( mb_strlen( $item->option_value ) );
 
             case 'autoload':
                 return $item->autoload;
@@ -215,6 +222,7 @@ class AHO_Options_List_Table extends WP_List_Table {
             'option_name'  => __( 'Name', 'a-healthier-option' ),
             'option_value' => __( 'Value', 'a-healthier-option' ),
             'autoload'     => __( 'Autoload', 'a-healthier-option' ),
+            'size'         => __( 'Size (in bytes)', 'a-healthier-option' ),
 
         );
 
@@ -244,7 +252,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      */
     function get_sortable_columns() {
         $sortable_columns = array(
-            'name' => array( 'name', true ),
+            'name' => array( 'name', 'size', 'autoload' ),
         );
 
         return $sortable_columns;
