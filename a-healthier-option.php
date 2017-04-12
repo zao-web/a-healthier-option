@@ -44,45 +44,234 @@ function aho_add_admin_menu() {
 
 add_action( 'admin_menu', 'aho_add_admin_menu' );
 
+function aho_autoload_column_is_indexed() {
+	global $wpdb;
+
+	$indicies = wp_list_pluck( $wpdb->get_results( 'SHOW INDEX FROM ' . $wpdb->options ), 'Column_name' );
+
+	return in_array( 'autoload', $indicies, true );
+}
+
+function aho_index_autoload_column() {
+	global $wpdb;
+	return add_clean_index( $wpdb->options, 'autoload' );
+}
+
 function aho_settings_init() {
 
 	register_setting( 'aho_settings', 'aho_settings' );
 
 	add_settings_section(
 		'aho_aho_settings_section',
-		__( 'Customize your options table', 'aho' ),
+		'',
 		'aho_settings_section_callback',
 		'aho_settings'
 	);
 
-	add_settings_field(
-		'aho_text_field_0',
-		__( 'Add an index to the autoload column', 'aho' ),
-		'aho_text_field_0_render',
-		'aho_settings',
-		'aho_aho_settings_section'
-	);
 }
 
 add_action( 'admin_init', 'aho_settings_init' );
 
-function aho_text_field_0_render() {
-
-	$options = get_option( 'aho_settings' );
+function aho_settings_section_callback() {
+	$health_matrix = aho_get_healh_matrix_rows();
 	?>
-	<input type='text' name='aho_settings[aho_text_field_0]' value='<?php echo $options['aho_text_field_0']; ?>'>
+	<p>It can be pretty easy for your options table to get unweildy.</p>
+	<p>Depending on the configuration of your server, your database, and your object cache - what WordPress intended to be a simple (and relatively small) table of options can turn into the main culprit behind your site's slow speed.</p>
+	<p>Below, we've included a health matrix for your options table. It measure a lot of technical stats about your table, makes recommendations, and gives you a simple way to implement those recommendations. As always, you should totally make a backup of your database before doing anything, really, ever.</p>
+
+	<h3>Health Matrix</h3>
+	<table>
+		<thead>
+			<tr>
+				<th></th>
+				<th>Status</th>
+				<th>Recommendation</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php foreach ( $health_matrix as $heuristic ) : ?>
+				<tr>
+					<td><?php echo wp_kses_post( $heuristic['title'] ); ?></td>
+					<td><?php echo esc_html( $heuristic['status']() ); ?></td>
+					<td><?php echo wp_kses_post( $heuristic['action']() ); ?></td>
+					<td><?php echo esc_html( $heuristic['recommendation']() ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
 	<?php
+}
+
+function aho_get_healh_matrix_rows() {
+	return array(
+		array(
+			'title'  => 'Using an external object cache?',
+			'status'         => function() {
+				$using = wp_using_ext_object_cache();
+
+				if ( ! $using ) {
+					return 'No';
+				}
+
+				$dropins = get_dropins();
+
+				return 'Using ' . ['object-cache.php']['Name'];
+			},
+			'action'         => function() {
+				$using = wp_using_ext_object_cache();
+
+				if ( ! $using ) {
+					return 'No';
+				}
+
+				$dropins = get_dropins();
+
+				return 'Using ' . ['object-cache.php']['Name'];
+			},
+			'recommendation' => function() {
+				$using = wp_using_ext_object_cache();
+
+				if ( ! $using ) {
+					return 'Consider using an object cache, like Memcached or Redis.';
+				}
+
+				$dropins = get_dropins();
+
+				return 'Using ' . ['object-cache.php']['Name'];
+			}
+		),
+		array(
+			'title' => 'Options Table Size',
+			'status'         => function() {
+				$count         = aho_get_option_count();
+				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
+
+				return $maybe_too_big ? 'Too many options! (' . $count . ')' : 'Healthy amount of options (' . $count . ')';
+			},
+			'action'         => function() {
+				$count         = aho_get_option_count();
+				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
+
+				return $maybe_too_big ? 'See table above.' : 'No action required';
+			},
+			'recommendation' => function() {
+				$count         = aho_get_option_count();
+				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
+
+				return $maybe_too_big ? 'Too many options! (' . $count . ')' : 'Healthy amount of options (' . $count . ')';
+			},
+		),
+		array(
+			'title' => 'Options Table Engine',
+			'status'         => function() {
+				return aho_is_innodb() ? 'InnoDB' : 'MyISAM';
+			},
+			'action'         => function() {
+				return aho_is_innodb() ? 'No action required' : 'Update Options Table to InnoDB engine.';
+			},
+			'recommendation' => function() {
+				return aho_is_innodb() ? 'No recommendation' : 'We recommend updating your options table engine to InnoDB. Before doing so, we highly recommend backing up your database.';
+			},
+		),
+		array(
+			'title' => 'Autoload Index',
+			'status'         => function() {
+				return aho_autoload_column_is_indexed() ? 'Autoload column indexed' : 'Autoload column unindexed';
+			},
+			'action'         => function() {
+				return aho_autoload_column_is_indexed() ? 'No action required' : 'Index autoload column';
+			},
+			'recommendation' => function() {
+				return aho_autoload_column_is_indexed() ? 'No recommendation' : 'We recommend indexing your autoload column, as that can significantly increase the speed of querying the options table.';
+			},
+		),
+		array(
+			'title'          => '<code>alloptions</code> cache size',
+			'status'         => function() {
+				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+
+				return $too_big ? 'Too big - '. aho_get_all_options_size( true ) : 'Just fine - ' . aho_get_all_options_size( true );
+			},
+			'action'         => function() {
+				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+
+				return $too_big ? 'See list table above.' : 'You good';
+			},
+			'recommendation' => function() {
+				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+
+				return $too_big ? 'We recommend deleting options, or changing the autoload setting from "yes" to "no" until this value is under 1MB.' : 'You good';
+			},
+		),
+		array(
+			'title'          => 'Number of Transients',
+			'status'         => function() {
+				global $wpdb;
+				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
+
+				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'Too many!' : 'you good';
+			},
+			'action'         => function() {
+				global $wpdb;
+				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
+
+				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'Download and use Transients Manager' : 'you good';
+			},
+			'recommendation' => function() {
+				global $wpdb;
+				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
+
+				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'We recommend using a transients management plugin to clean up your transients - it is likely that you are using some plugins who are bad actors here.' : 'you good';
+			},
+		),
+	);
+}
+
+function aho_get_health_score() {
 
 }
 
-function aho_settings_section_callback() {
-	_e( 'Depending on the nature of your database server, the settings below should be helpful for improving the performance of your options table.', 'aho' );
+/**
+ * background-color: rgb($rgb)
+ * @return [type] [description]
+ */
+function aho_get_health_color() {
+	$health_score = aho_get_health_score();
+
+	if ( 100 === $health_score ) {
+		$health_score--;
+	}
+
+	if ( $health_score < 50 ) {
+		// green to yellow
+		$r = floor( 255 * ( $health_score / 50 ) );
+		$g = 255;
+	} else {
+		// yellow to red
+		$r = 255;
+		$g = floor( 255 * ( ( 50 - $health_score % 50 ) / 50 ) );
+	}
+
+	$b = 0;
+
+	return "$r,$g,$b";
 }
 
 function aho_options_page() {
 	?>
 
 	<div class="wrap">
+
+	    <form method="post">
+	        <input type="hidden" name="page" value="aho_list_table">
+	        <?php
+		        $list_table = new AHO_Options_List_Table();
+		        $list_table->prepare_items();
+		        $list_table->display();
+	        ?>
+    	</form>
+
 		<form action='options.php' method='post'>
 
 			<h2>A Healthier Options Table</h2>
@@ -94,17 +283,7 @@ function aho_options_page() {
 			?>
 
 		</form>
-
-	    <form method="post">
-	        <input type="hidden" name="page" value="aho_list_table">
-	        <?php
-		        $list_table = new AHO_Options_List_Table();
-		        $list_table->prepare_items();
-		        $list_table->display();
-	        ?>
-    	</form>
-
-</div>
+	</div>
 	<?php
 }
 
@@ -115,7 +294,7 @@ function aho_options_page() {
  *
  * @return array
  */
-function aho_get_all_option( $args = array() ) {
+function aho_get_all_options( $args = array() ) {
     global $wpdb;
 
     $defaults = array(
@@ -125,15 +304,13 @@ function aho_get_all_option( $args = array() ) {
         'order'      => 'ASC',
     );
 
-    $args      = wp_parse_args( $args, $defaults );
+    $args = wp_parse_args( $args, $defaults );
 
 	if ( 'size' === $args['orderby'] ) {
 		$args['orderby'] = 'CHAR_LENGTH(option_value)';
 	}
 
-    $items = $wpdb->get_results( 'SELECT * FROM ' . $wpdb->options . ' ORDER BY ' . $args['orderby'] .' ' . $args['order'] .' LIMIT ' . $args['offset'] . ', ' . $args['number'] );
-
-    return $items;
+    return $wpdb->get_results( 'SELECT * FROM ' . $wpdb->options . ' ORDER BY ' . $args['orderby'] .' ' . $args['order'] .' LIMIT ' . $args['offset'] . ', ' . $args['number'] );
 }
 
 /**
@@ -147,8 +324,10 @@ function aho_get_option_count() {
     return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . $wpdb->options );
 }
 
-function aho_get_all_options_size() {
-	return size_format( mb_strlen( serialize( wp_load_alloptions() ) ) );
+function aho_get_all_options_size( $format = false ) {
+	$size = mb_strlen( serialize( wp_load_alloptions() ) );
+
+	return $format ? size_format( $size ) : $size;
 }
 
 if ( ! class_exists ( 'WP_List_Table' ) ) {
@@ -204,7 +383,7 @@ class AHO_Options_List_Table extends WP_List_Table {
                 return $item->option_name;
 
 	        case 'option_value':
-	            return $item->option_value;
+	            return strlen( $item->option_value ) < 45 ? $item->option_value : substr( $item->option_value, 0, 40 ) . '[...]';
 
             case 'size':
                 return number_format( mb_strlen( $item->option_value ) );
@@ -321,7 +500,7 @@ class AHO_Options_List_Table extends WP_List_Table {
             $args['order']   = $_REQUEST['order'] ;
         }
 
-        $this->items  = aho_get_all_option( $args );
+        $this->items  = aho_get_all_options( $args );
 
         $this->set_pagination_args( array(
             'total_items' => aho_get_option_count(),
