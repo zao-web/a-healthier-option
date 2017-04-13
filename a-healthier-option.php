@@ -519,7 +519,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return string
      */
-    function column_default( $item, $column_name ) {
+    public function column_default( $item, $column_name ) {
 
         switch ( $column_name ) {
             case 'option_name':
@@ -564,7 +564,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return string
      */
-    function column_option_name( $item ) {
+    public function column_option_name( $item ) {
 
         $actions           = array();
         $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
@@ -579,7 +579,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return string
      */
-    function column_cb( $item ) {
+    public function column_cb( $item ) {
         return sprintf(
             '<input type="checkbox" name="option_id[]" value="%d" />', $item->option_id
         );
@@ -590,7 +590,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return void
      */
-    function prepare_items() {
+    public function prepare_items() {
 
         $columns               = $this->get_columns();
         $hidden                = array();
