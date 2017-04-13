@@ -30,6 +30,11 @@ Domain Path:
 
 defined( 'ABSPATH' ) || die;
 
+define( 'AHO_BAD_EMOJI'  , '😢' );
+define( 'AHO_OKAY_EMOJI' , '😐' );
+define( 'AHO_GOOD_EMOJI' , '😊' );
+define( 'AHO_GREAT_EMOJI', '😁' );
+
 function aho_is_innodb() {
 	global $wpdb;
 
@@ -80,7 +85,21 @@ function aho_settings_section_callback() {
 	<p>Below, we've included a health matrix for your options table. It measure a lot of technical stats about your table, makes recommendations, and gives you a simple way to implement those recommendations. As always, you should totally make a backup of your database before doing anything, really, ever.</p>
 
 	<h3>Health Matrix</h3>
-	<table>
+	<style type="text/css">
+		table.health-matrix td,
+		table.health-matrix th {
+		    padding: 1em;
+		    border: 1px solid #ccc;
+		}
+		table.health-matrix td.status {
+			text-align: center;
+			font-size: 3em;
+		}
+		table.health-matrix td.recommendation {
+			max-width: 500px
+		}
+	</style>
+	<table class="health-matrix">
 		<thead>
 			<tr>
 				<th></th>
@@ -92,10 +111,10 @@ function aho_settings_section_callback() {
 		<tbody>
 			<?php foreach ( $health_matrix as $heuristic ) : ?>
 				<tr>
-					<td><?php echo wp_kses_post( $heuristic['title'] ); ?></td>
-					<td><?php echo esc_html( $heuristic['status']() ); ?></td>
+					<td><em><?php echo wp_kses_post( $heuristic['title'] ); ?></td>
+					<td class="status"><?php echo esc_html( $heuristic['status']() ); ?></td>
+					<td class="recommendation"><?php echo wp_kses_post( $heuristic['recommendation']() ); ?></td>
 					<td><?php echo wp_kses_post( $heuristic['action']() ); ?></td>
-					<td><?php echo esc_html( $heuristic['recommendation']() ); ?></td>
 				</tr>
 			<?php endforeach; ?>
 		</tbody>
@@ -111,12 +130,12 @@ function aho_get_healh_matrix_rows() {
 				$using = wp_using_ext_object_cache();
 
 				if ( ! $using ) {
-					return 'No';
+					return AHO_BAD_EMOJI;
 				}
 
 				$dropins = get_dropins();
 
-				return 'Using ' . ['object-cache.php']['Name'];
+				return AHO_GREAT_EMOJI;
 			},
 			'action'         => function() {
 				$using = wp_using_ext_object_cache();
@@ -133,7 +152,7 @@ function aho_get_healh_matrix_rows() {
 				$using = wp_using_ext_object_cache();
 
 				if ( ! $using ) {
-					return 'Consider using an object cache, like Memcached or Redis.';
+					return 'Consider using an object cache, like <a href="https://wordpress.org/plugins/memcached-redux/">Memcached</a> or <a href="https://wordpress.org/plugins/redis-cache/">Redis</a>.';
 				}
 
 				$dropins = get_dropins();
@@ -145,9 +164,22 @@ function aho_get_healh_matrix_rows() {
 			'title' => 'Options Table Size',
 			'status'         => function() {
 				$count         = aho_get_option_count();
-				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
+				$maybe_too_big = apply_filters( 'aho_too_many_options', 1000 );
 
-				return $maybe_too_big ? 'Too many options! (' . $count . ')' : 'Healthy amount of options (' . $count . ')';
+				if ( $count < ( $maybe_too_big / 2 ) ) {
+					return AHO_GREAT_EMOJI;
+				}
+
+				if ( $count < $maybe_too_big ) {
+					return AHO_GOOD_EMOJI;
+				}
+
+				if ( $count < ( $maybe_too_big * 2 ) ) {
+					return AHO_OKAY_EMOJI;
+				}
+
+				return AHO_BAD_EMOJI;
+
 			},
 			'action'         => function() {
 				$count         = aho_get_option_count();
@@ -165,10 +197,10 @@ function aho_get_healh_matrix_rows() {
 		array(
 			'title' => 'Options Table Engine',
 			'status'         => function() {
-				return aho_is_innodb() ? 'InnoDB' : 'MyISAM';
+				return aho_is_innodb() ? AHO_GOOD_EMOJI : AHO_OKAY_EMOJI;
 			},
 			'action'         => function() {
-				return aho_is_innodb() ? 'No action required' : 'Update Options Table to InnoDB engine.';
+				return aho_is_innodb() ? 'No action required' : submit_button( 'Update to InnoDB engine' );
 			},
 			'recommendation' => function() {
 				return aho_is_innodb() ? 'No recommendation' : 'We recommend updating your options table engine to InnoDB. Before doing so, we highly recommend backing up your database.';
@@ -177,31 +209,130 @@ function aho_get_healh_matrix_rows() {
 		array(
 			'title' => 'Autoload Index',
 			'status'         => function() {
-				return aho_autoload_column_is_indexed() ? 'Autoload column indexed' : 'Autoload column unindexed';
+				$is_innodb = aho_is_innodb();
+				$indexed   = aho_autoload_column_is_indexed();
+
+				// Ideally, we're running InnoDB engine w/ autoload indexed
+				if ( $indexed && $is_innodb ) {
+					return AHO_GREAT_EMOJI;
+				}
+
+				// Otherwise, MyISAM w/no index is alright
+				if ( ! $indexed && ! $is_innodb ) {
+					return AHO_GOOD_EMOJI;
+				}
+
+				// Not great, but easily fixed is InnoDb without an index on autoload
+				if ( ! $indexed && $is_innodb ) {
+					return AHO_OKAY_EMOJI;
+				}
+
+				// And really not good is an autoload index on MyISAM
+				return AHO_BAD_EMOJI;
 			},
 			'action'         => function() {
-				return aho_autoload_column_is_indexed() ? 'No action required' : 'Index autoload column';
+				$is_innodb = aho_is_innodb();
+				$indexed   = aho_autoload_column_is_indexed();
+
+				// Ideally, we're running InnoDB engine w/ autoload indexed
+				if ( $indexed && $is_innodb ) {
+					return 'None required';
+				}
+
+				// Otherwise, MyISAM w/no index is alright
+				if ( ! $indexed && ! $is_innodb ) {
+					return 'None required.';
+				}
+
+				// Not great, but easily fixed is InnoDb without an index on autoload
+				if ( ! $indexed && $is_innodb ) {
+					return submit_button( 'Add Index to Autoload' );
+				}
+
+				// And really not good is an autoload index on MyISAM
+				return submit_button( 'Update engine to InnoDB' );
 			},
 			'recommendation' => function() {
-				return aho_autoload_column_is_indexed() ? 'No recommendation' : 'We recommend indexing your autoload column, as that can significantly increase the speed of querying the options table.';
+				$is_innodb = aho_is_innodb();
+				$indexed   = aho_autoload_column_is_indexed();
+
+				// Ideally, we're running InnoDB engine w/ autoload indexed
+				if ( $indexed && $is_innodb ) {
+					return 'You are good to go!';
+				}
+
+				// Otherwise, MyISAM w/no index is alright
+				if ( ! $indexed && ! $is_innodb ) {
+					return 'You have a standard MyISAM engine, with no index on autoload. This is fine. However, you may find increased performance by changing your options table engine to InnoDB and adding an autoload index. As always, be sure to backup your database before making any changes to it.';
+				}
+
+				// Not great, but easily fixed is InnoDb without an index on autoload
+				if ( ! $indexed && $is_innodb ) {
+					return 'Your options table has the InnoDB engine, with no index on autoload. You may find increased performance by adding an autoload index. As always, be sure to backup your database before making any changes to it.';
+				}
+
+				// And really not good is an autoload index on MyISAM
+				return 'You have a standard MyISAM engine, with an index on autoload. Many tests seem to indicate this is a poor configuration. We recommend changing your options table engine to InnoDB. As always, be sure to backup your database before making any changes to it.';
 			},
 		),
 		array(
 			'title'          => '<code>alloptions</code> cache size',
 			'status'         => function() {
-				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+				$count         = aho_get_all_options_size();
+				$maybe_too_big = apply_filters( 'aho_cache_bucket_limit', MB_IN_BYTES );
+
+				if ( $count < ( $maybe_too_big * .5 ) ) {
+					return AHO_GREAT_EMOJI;
+				}
+
+				if ( $count < ( $maybe_too_big * .75 ) ) {
+					return AHO_GOOD_EMOJI;
+				}
+
+				if ( $count <= ( $maybe_too_big * .95 ) ) {
+					return AHO_OKAY_EMOJI;
+				}
+
+				return AHO_BAD_EMOJI;
 
 				return $too_big ? 'Too big - '. aho_get_all_options_size( true ) : 'Just fine - ' . aho_get_all_options_size( true );
 			},
 			'action'         => function() {
-				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+				$count         = aho_get_all_options_size();
+				$maybe_too_big = apply_filters( 'aho_cache_bucket_limit', MB_IN_BYTES );
 
-				return $too_big ? 'See list table above.' : 'You good';
+				if ( $count < ( $maybe_too_big * .5 ) ) {
+					return 'No action required';
+				}
+
+				if ( $count < ( $maybe_too_big * .75 ) ) {
+					return 'No action required.';
+				}
+
+				if ( $count <= ( $maybe_too_big * .95 ) ) {
+					return 'Consider pruning some options';
+				}
+
+				return 'Prune options via table above.';
 			},
 			'recommendation' => function() {
-				$too_big = aho_get_all_options_size() > MB_IN_BYTES;
+				$display_size  = aho_get_all_options_size( true );
+				$count         = aho_get_all_options_size();
+				$maybe_too_big = apply_filters( 'aho_cache_bucket_limit', MB_IN_BYTES );
 
-				return $too_big ? 'We recommend deleting options, or changing the autoload setting from "yes" to "no" until this value is under 1MB.' : 'You good';
+				if ( $count < ( $maybe_too_big * .5 ) ) {
+					return 'No recommendation at this time.';
+				}
+
+				if ( $count < ( $maybe_too_big * .75 ) ) {
+					return 'Your <code>alloptions</code> bucket is near 75% capacity (' . $display_size .'). While not currently problematic, you may want to consider pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
+				}
+
+				if ( $count <= ( $maybe_too_big * .95 ) ) {
+					return 'Your <code>alloptions</code> bucket is near 95% capacity (' . $display_size .'). While not yet problematic, we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
+				}
+
+				return 'Your <code>alloptions</code> bucket is near or over capacity (' . $display_size .'). This is problematic - we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
 			},
 		),
 		array(
@@ -210,19 +341,33 @@ function aho_get_healh_matrix_rows() {
 				global $wpdb;
 				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
 
-				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'Too many!' : 'you good';
+				$maybe_too_big = apply_filters( 'aho_too_many_transients', 150 );
+
+				if ( $transients < ( $maybe_too_big * .5 ) ) {
+					return AHO_GREAT_EMOJI;
+				}
+
+				if ( $transients < ( $maybe_too_big * .75 ) ) {
+					return AHO_GOOD_EMOJI;
+				}
+
+				if ( $transients <= ( $maybe_too_big * .95 ) ) {
+					return AHO_OKAY_EMOJI;
+				}
+
+				return AHO_BAD_EMOJI;
 			},
 			'action'         => function() {
 				global $wpdb;
 				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
 
-				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'Download and use Transients Manager' : 'you good';
+				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? '<a class="button button-primary href="https://wordpress.org/plugins/transients-manager/">Download and use Transients Manager</a>' : 'No action required.';
 			},
 			'recommendation' => function() {
 				global $wpdb;
 				$transients = $wpdb->get_var( "SELECT COUNT(*) FROM " . $wpdb->options . " WHERE `option_name` LIKE '_transient_%'" );
 
-				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'We recommend using a transients management plugin to clean up your transients - it is likely that you are using some plugins who are bad actors here.' : 'you good';
+				return $transients > apply_filters( 'aho_too_many_transients', 150 ) ? 'With ' . $transients . ' transients, your database has over our recommended limit of ' . apply_filters( 'aho_too_many_transients', 150 ) . '. We recommend using a transients management plugin to clean up your transients - it is likely that you are using some plugins who are bad actors here.' : 'No recommendation, ' . $transients .' transients is well within our recommended limit.';
 			},
 		),
 	);
@@ -279,9 +424,7 @@ function aho_options_page() {
 			<?php
 				settings_fields( 'aho_settings' );
 				do_settings_sections( 'aho_settings' );
-				submit_button();
 			?>
-
 		</form>
 	</div>
 	<?php
@@ -300,8 +443,8 @@ function aho_get_all_options( $args = array() ) {
     $defaults = array(
         'number'     => 20,
         'offset'     => 0,
-        'orderby'    => 'option_id',
-        'order'      => 'ASC',
+        'orderby'    => 'size',
+        'order'      => 'DESC',
     );
 
     $args = wp_parse_args( $args, $defaults );
@@ -499,6 +642,7 @@ class AHO_Options_List_Table extends WP_List_Table {
             $args['orderby'] = $_REQUEST['orderby'];
             $args['order']   = $_REQUEST['order'] ;
         }
+
 
         $this->items  = aho_get_all_options( $args );
 
