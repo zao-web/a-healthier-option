@@ -484,18 +484,13 @@ function aho_options_page() {
 	?>
 
 	<div class="wrap">
+		<h2>A Healthier Options Table</h2>
+		<?php
+			settings_fields( 'aho_settings' );
+			do_settings_sections( 'aho_settings' );
+		?>
 
-		<form action='options.php' method='post'>
-
-			<h2>A Healthier Options Table</h2>
-
-			<?php
-				settings_fields( 'aho_settings' );
-				do_settings_sections( 'aho_settings' );
-			?>
-		</form>
-
-	    <form method="post">
+	    <form method="post" action="">
 	        <input type="hidden" name="page" value="aho_list_table">
 	        <?php
 		        $list_table = new AHO_Options_List_Table();
@@ -609,7 +604,7 @@ class AHO_Options_List_Table extends WP_List_Table {
                 return number_format( mb_strlen( $item->option_value ) );
 
             case 'autoload':
-                return 'no' === $item->autoload ? $item->autoload  : $item->autoload . '<br /><a class="autoload-toggle" data-option-name="' . $item->option_name . '"href="#">Turn autoload off</a><span class="spinner"></span>';
+                return 'no' === $item->autoload ? $item->autoload  : '<span class="autoload-text">' . $item->autoload . '</span><br /><a class="autoload-toggle" data-option-name="' . $item->option_name . '"href="#">Turn autoload off</a><span class="spinner"></span>';
 
             default:
                 return isset( $item->$column_name ) ? $item->$column_name : '';
@@ -621,7 +616,7 @@ class AHO_Options_List_Table extends WP_List_Table {
      *
      * @return array
      */
-    function get_columns() {
+    public function get_columns() {
         $columns = array(
             'cb'           => '<input type="checkbox" />',
             'option_name'  => __( 'Name', 'a-healthier-option' ),
@@ -643,9 +638,9 @@ class AHO_Options_List_Table extends WP_List_Table {
     public function column_option_name( $item ) {
 
         $actions           = array();
-        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
+        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'tools.php?page=a_healthier_option&action=delete&id=' . $item->option_name ), $item->option_name, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 
-        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'admin.php?page=options-health&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
+        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'tools.php?page=a_healthier_option&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
     }
 
     /**
