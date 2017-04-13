@@ -218,7 +218,7 @@ function aho_get_healh_matrix_rows() {
 				$using = wp_using_ext_object_cache();
 
 				if ( ! $using ) {
-					return 'No';
+					return 'No action required.';
 				}
 
 				$dropins = get_dropins();
@@ -262,7 +262,7 @@ function aho_get_healh_matrix_rows() {
 				$count         = aho_get_option_count();
 				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
 
-				return $maybe_too_big ? 'See table below.' : 'No action required';
+				return $maybe_too_big ? 'See table below.' : 'No action required.';
 			},
 			'recommendation' => function() {
 				$count         = aho_get_option_count();
@@ -277,7 +277,7 @@ function aho_get_healh_matrix_rows() {
 				return aho_is_innodb() ? AHO_GOOD_EMOJI : AHO_OKAY_EMOJI;
 			},
 			'action'         => function() {
-				return aho_is_innodb() ? 'No action required' : submit_button( 'Update to InnoDB engine' );
+				return aho_is_innodb() ? 'No action required.' : submit_button( 'Update to InnoDB engine', 'primary aho-action-submit', 'submit', true, array( 'data-action' => 'update-engine' ) );
 			},
 			'recommendation' => function() {
 				return aho_is_innodb() ? 'No recommendation' : 'We recommend updating your options table engine to InnoDB. Before doing so, we highly recommend backing up your database.';
@@ -313,21 +313,21 @@ function aho_get_healh_matrix_rows() {
 
 				// Ideally, we're running InnoDB engine w/ autoload indexed
 				if ( $indexed && $is_innodb ) {
-					return 'None required';
+					return 'No action required';
 				}
 
 				// Otherwise, MyISAM w/no index is alright
 				if ( ! $indexed && ! $is_innodb ) {
-					return 'None required.';
+					return 'No action required.';
 				}
 
 				// Not great, but easily fixed is InnoDb without an index on autoload
 				if ( ! $indexed && $is_innodb ) {
-					return submit_button( 'Add Index to Autoload' );
+					return submit_button( 'Add Index to Autoload', 'primary aho-action-submit', 'submit', true, array( 'data-action' => 'add-index' ) );
 				}
 
 				// And really not good is an autoload index on MyISAM
-				return submit_button( 'Update engine to InnoDB' );
+				return submit_button( 'Update engine to InnoDB', 'primary aho-action-submit', 'submit', true, array( 'data-action' => 'update-engine' ) );
 			},
 			'recommendation' => function() {
 				$is_innodb = aho_is_innodb();
