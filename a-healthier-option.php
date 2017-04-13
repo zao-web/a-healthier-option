@@ -567,22 +567,9 @@ class AHO_Options_List_Table extends WP_List_Table {
     function column_option_name( $item ) {
 
         $actions           = array();
-        $actions['edit']   = sprintf( '<a href="%s" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=edit&id=' . $item->option_id ), $item->option_id, __( 'Edit this item', 'a-healthier-option' ), __( 'Edit', 'a-healthier-option' ) );
-        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this item', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
+        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'admin.php?page=options-health&action=delete&id=' . $item->option_id ), $item->option_id, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 
         return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'admin.php?page=options-health&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
-    }
-
-    /**
-     * Set the bulk actions
-     *
-     * @return array
-     */
-    function get_bulk_actions() {
-        $actions = array(
-            'trash'  => __( 'Move to Trash', 'a-healthier-option' ),
-        );
-        return $actions;
     }
 
     /**
@@ -596,23 +583,6 @@ class AHO_Options_List_Table extends WP_List_Table {
         return sprintf(
             '<input type="checkbox" name="option_id[]" value="%d" />', $item->option_id
         );
-    }
-
-    /**
-     * Set the views
-     *
-     * @return array
-     */
-    public function get_views() {
-        $status_links   = array();
-        $base_link      = admin_url( 'admin.php?page=sample-page' );
-
-        foreach ($this->counts as $key => $value) {
-            $class = ( $key == $this->page_status ) ? 'current' : 'status-' . $key;
-            $status_links[ $key ] = sprintf( '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', add_query_arg( array( 'status' => $key ), $base_link ), $class, $value['label'], $value['count'] );
-        }
-
-        return $status_links;
     }
 
     /**
