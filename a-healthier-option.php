@@ -35,6 +35,19 @@ define( 'AHO_OKAY_EMOJI' , '😐' );
 define( 'AHO_GOOD_EMOJI' , '😊' );
 define( 'AHO_GREAT_EMOJI', '😁' );
 
+function aho_core_options() {
+	return apply_filters( 'aho_core_options', array(
+		'siteurl',
+		'home', 2 => 'blogname', 3 => 'blogdescription', 4 => 'users_can_register', 5 => 'admin_email', 6 => 'start_of_week', 7 => 'use_balanceTags', 8 => 'use_smilies', 9 => 'require_name_email', 10 => 'comments_notify', 11 => 'posts_per_rss', 12 => 'rss_use_excerpt', 13 => 'mailserver_url',
+		'mailserver_login', 15 => 'mailserver_pass', 16 => 'mailserver_port', 17 => 'default_category', 18 => 'default_comment_status', 19 => 'default_ping_status', 20 => 'default_pingback_flag', 21 => 'posts_per_page', 22 => 'date_format', 23 => 'time_format', 24 => 'links_updated_date_format', 25 => 'comment_moderation', 26 => 'moderation_notify',
+		'permalink_structure', 28 => 'rewrite_rules', 29 => 'hack_file', 30 => 'blog_charset', 31 => 'moderation_keys', 32 => 'active_plugins', 33 => 'category_base', 34 => 'ping_sites', 35 => 'comment_max_links', 36 => 'gmt_offset', 37 => 'default_email_category', 38 => 'recently_edited', 39 => 'template',
+		'stylesheet', 41 => 'comment_whitelist', 42 => 'blacklist_keys', 43 => 'comment_registration', 44 => 'html_type', 45 => 'use_trackback', 46 => 'default_role', 47 => 'db_version', 48 => 'uploads_use_yearmonth_folders', 49 => 'upload_path', 50 => 'blog_public', 51 => 'default_link_category', 52 => 'show_on_front',
+		'tag_base', 54 => 'show_avatars', 55 => 'avatar_rating', 56 => 'upload_url_path', 57 => 'thumbnail_size_w', 58 => 'thumbnail_size_h', 59 => 'thumbnail_crop', 60 => 'medium_size_w', 61 => 'medium_size_h', 62 => 'avatar_default', 63 => 'large_size_w', 64 => 'large_size_h', 65 => 'image_default_link_type',
+		'image_default_size', 67 => 'image_default_align', 68 => 'close_comments_for_old_posts', 69 => 'close_comments_days_old', 70 => 'thread_comments', 71 => 'thread_comments_depth', 72 => 'page_comments', 73 => 'comments_per_page', 74 => 'default_comments_page', 75 => 'comment_order', 76 => 'sticky_posts', 77 => 'widget_categories', 78 => 'widget_text',
+		'widget_rss', 80 => 'uninstall_plugins', 81 => 'timezone_string', 82 => 'page_for_posts', 83 => 'page_on_front', 84 => 'default_post_format', 85 => 'link_manager_enabled', 86 => 'finished_splitting_shared_terms', 87 => 'site_icon', 88 => 'medium_large_size_w', 89 => 'medium_large_size_h', 90 => 'initial_db_version', 91 => 'moderation_keys',
+		'recently_edited', 93 => 'blacklist_keys', 94 => 'uninstall_plugins'
+	) );
+}
 function aho_is_innodb() {
 	global $wpdb;
 
@@ -636,8 +649,18 @@ class AHO_Options_List_Table extends WP_List_Table {
      */
     public function column_option_name( $item ) {
 
-        $actions           = array();
-        $actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', admin_url( 'tools.php?page=a_healthier_option&action=delete&id=' . $item->option_name ), $item->option_name, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
+        $actions = array();
+
+		if ( ! in_array( $item->option_name, aho_core_options(), true ) ) {
+
+			$url = admin_url( 'tools.php?page=a_healthier_option&action=delete&id=' . $item->option_name );
+
+			if ( isset( $_GET['paged'] ) ) {
+				$url = add_query_arg( 'paged', absint( $_GET['paged'] ), $url );
+			}
+
+			$actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', $url, $item->option_name, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
+		}
 
         return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'tools.php?page=a_healthier_option&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
     }
