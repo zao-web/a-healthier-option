@@ -692,3 +692,57 @@ class AHO_Options_List_Table extends WP_List_Table {
         ) );
     }
 }
+
+function aho_process_actions() {
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( $_REQUEST  );
+	}
+
+	if ( ! isset( $_REQUEST['action'] ) ) {
+		return;
+	}
+
+	if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] && isset( $_GET['id'] ) ) {
+		delete_option( $_GET['id'] );
+		wp_safe_redirect( remove_query_arg( array( 'action', 'id' ) ) );
+		exit;
+	}
+
+	if ( ! isset( $_REQUEST['aho_action'] ) ) {
+		wp_send_json_error();
+	}
+
+	$success = false;
+
+	switch ( $_REQUEST['aho_action'] ) {
+
+		case 'autoload_toggle':
+			if ( isset( $_REQUEST['option_name'] ) ) {
+				$success = aho_turn_off_autoload( $_REQUEST['option_name'] );
+			}
+			break;
+
+		case 'update-engine':
+			$success = aho_alter_options_table_engine();
+			break;
+
+		case 'add-index':
+		 	$success = aho_index_autoload_column();
+			break;
+
+		default:
+
+			break;
+	}
+
+	if ( $success ) {
+		wp_send_json_success();
+	}
+
+	wp_send_json_error();
+
+}
+
+add_action( 'wp_ajax_aho_process_actions'       , 'aho_process_actions' );
+add_action( 'load-tools_page_a_healthier_option', 'aho_process_actions' );
