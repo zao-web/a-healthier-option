@@ -247,7 +247,7 @@ function aho_get_healh_matrix_rows() {
 
 				$dropins = get_dropins();
 
-				return 'Using ' . ['object-cache.php']['Name'];
+				return 'Using ' . $dropins['object-cache.php']['Name'];
 			}
 		),
 		array(
