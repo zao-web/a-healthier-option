@@ -79,7 +79,7 @@ add_action( 'admin_init', 'aho_settings_init' );
 
 function aho_settings_section_callback() {
 	$health_matrix = aho_get_healh_matrix_rows();
-	?>
+?>
 	<p>It can be pretty easy for your options table to get unweildy.</p>
 	<p>Depending on the configuration of your server, your database, and your object cache - what WordPress intended to be a simple (and relatively small) table of options can turn into the main culprit behind your site's slow speed.</p>
 	<p>Below, we've included a health matrix for your options table. It measure a lot of technical stats about your table, makes recommendations, and gives you a simple way to implement those recommendations. As always, you should totally make a backup of your database before doing anything, really, ever.</p>
@@ -185,7 +185,7 @@ function aho_get_healh_matrix_rows() {
 				$count         = aho_get_option_count();
 				$maybe_too_big = $count > apply_filters( 'aho_too_many_options', 1000 );
 
-				return $maybe_too_big ? 'See table above.' : 'No action required';
+				return $maybe_too_big ? 'See table below.' : 'No action required';
 			},
 			'recommendation' => function() {
 				$count         = aho_get_option_count();
@@ -313,7 +313,7 @@ function aho_get_healh_matrix_rows() {
 					return 'Consider pruning some options';
 				}
 
-				return 'Prune options via table above.';
+				return 'Prune options via table below .';
 			},
 			'recommendation' => function() {
 				$display_size  = aho_get_all_options_size( true );
@@ -408,15 +408,6 @@ function aho_options_page() {
 
 	<div class="wrap">
 
-	    <form method="post">
-	        <input type="hidden" name="page" value="aho_list_table">
-	        <?php
-		        $list_table = new AHO_Options_List_Table();
-		        $list_table->prepare_items();
-		        $list_table->display();
-	        ?>
-    	</form>
-
 		<form action='options.php' method='post'>
 
 			<h2>A Healthier Options Table</h2>
@@ -426,6 +417,15 @@ function aho_options_page() {
 				do_settings_sections( 'aho_settings' );
 			?>
 		</form>
+
+	    <form method="post">
+	        <input type="hidden" name="page" value="aho_list_table">
+	        <?php
+		        $list_table = new AHO_Options_List_Table();
+		        $list_table->prepare_items();
+		        $list_table->display();
+	        ?>
+    	</form>
 	</div>
 	<?php
 }
