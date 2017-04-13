@@ -68,8 +68,21 @@ function aho_autoload_column_is_indexed() {
 	return in_array( 'autoload', $indicies, true );
 }
 
+function aho_turn_off_autoload( $option_name ) {
+	global $wpdb;
+
+	return $wpdb->update(
+		$wpdb->options,
+		array( 'autoload' => 'no' ),
+		array( 'option_name' => $option_name ),
+		array( '%s' ),
+		array( '%s' )
+	);
+}
+
 function aho_index_autoload_column() {
 	global $wpdb;
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	return add_clean_index( $wpdb->options, 'autoload' );
 }
 
