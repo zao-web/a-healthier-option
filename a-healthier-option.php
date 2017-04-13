@@ -122,7 +122,60 @@ function aho_settings_section_callback() {
 		table.health-matrix td.recommendation {
 			max-width: 500px
 		}
+		.column-autoload .spinner {
+			float: none;
+		}
 	</style>
+	<script>
+	jQuery( document ).ready( function( $ ) {
+
+		// Autoload toggles
+		$( '.autoload-toggle' ).on( 'click', function( evt ) {
+			var $t = $( this );
+			evt.preventDefault();
+
+			$t.siblings( '.spinner' ).css( 'visibility', 'visible' );
+			$.post(
+				ajaxurl,
+				{
+					action      : 'aho_process_actions',
+					aho_action  : 'autoload_toggle',
+					option_name : $t.data( 'option-name' )
+				},
+				function( response ) {
+					$t.siblings( '.spinner' ).hide();
+					if ( response.success ) {
+						$t.siblings( '.autoload-text' ).text( 'no' );
+						$t.remove();
+					}
+				},
+				'json'
+			);
+		} );
+
+		// Index / engine toggles
+		$( '.aho-action-submit' ).on( 'click', function(evt) {
+			var $t = $( this );
+			evt.preventDefault();
+			$.post(
+				ajaxurl,
+				{
+					action      : 'aho_process_actions',
+					aho_action  : $t.data( 'action' )
+				},
+				function( response ) {
+					if ( response.success ) {
+						$t.parent.text( 'No action required.' );
+					}
+				},
+				'json'
+			);
+
+		} );
+
+		// Engine toggles
+	} );
+	</script>
 	<table class="health-matrix">
 		<thead>
 			<tr>
