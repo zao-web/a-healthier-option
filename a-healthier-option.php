@@ -372,7 +372,6 @@ function aho_get_healh_matrix_rows() {
 
 				return AHO_BAD_EMOJI;
 
-				return $too_big ? 'Too big - '. aho_get_all_options_size( true ) : 'Just fine - ' . aho_get_all_options_size( true );
 			},
 			'action'         => function() {
 				$count         = aho_get_all_options_size();
@@ -390,7 +389,7 @@ function aho_get_healh_matrix_rows() {
 					return 'Consider pruning some options';
 				}
 
-				return 'Prune options via table below .';
+				return 'Prune options via table below.';
 			},
 			'recommendation' => function() {
 				$display_size  = aho_get_all_options_size( true );
@@ -402,14 +401,14 @@ function aho_get_healh_matrix_rows() {
 				}
 
 				if ( $count < ( $maybe_too_big * .75 ) ) {
-					return 'Your <code>alloptions</code> bucket is near 75% capacity (' . $display_size .'). While not currently problematic, you may want to consider pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
+					return 'Your <code>alloptions</code> bucket is near 75% capacity (' . $display_size .', well, ' . $count . ' bytes to be exact). While not currently problematic, you may want to consider pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
 				}
 
 				if ( $count <= ( $maybe_too_big * .95 ) ) {
-					return 'Your <code>alloptions</code> bucket is near 95% capacity (' . $display_size .'). While not yet problematic, we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
+					return 'Your <code>alloptions</code> bucket is near 95% capacity (' . $display_size .', well, ' . $count . ' bytes to be exact). While not yet problematic, we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
 				}
 
-				return 'Your <code>alloptions</code> bucket is near or over capacity (' . $display_size .'). This is problematic - we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
+				return 'Your <code>alloptions</code> bucket is near or over capacity (' . $display_size .', well, ' . $count . ' bytes to be exact). This is problematic - we would recommend pruning some options by either deleting unused options, or setting the autoload value on options that are infrequently accessed from "yes" to "no".';
 			},
 		),
 		array(
