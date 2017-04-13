@@ -43,6 +43,17 @@ function aho_is_innodb() {
 	return 'InnoDB' === $engine;
 }
 
+function aho_alter_options_table_engine() {
+	$inno = aho_is_innodb();
+
+	if ( $inno ) {
+		return false;
+	}
+
+	global $wpdb;
+	return $wpdb->query( 'ALTER TABLE ' . $wpdb->options . ' ENGINE=InnoDB;' );
+}
+
 function aho_add_admin_menu() {
 	add_submenu_page( 'tools.php', __( 'A Healthier Option', 'a-healthier-option' ), __( 'A Healthier Option', 'a-healthier-option' ), 'manage_options', 'a_healthier_option', 'aho_options_page' );
 }
