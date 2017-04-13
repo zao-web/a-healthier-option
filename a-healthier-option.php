@@ -532,7 +532,7 @@ class AHO_Options_List_Table extends WP_List_Table {
                 return number_format( mb_strlen( $item->option_value ) );
 
             case 'autoload':
-                return $item->autoload;
+                return 'no' === $item->autoload ? $item->autoload  : $item->autoload . '<br /><a class="autoload-toggle" data-option-name="' . $item->option_name . '"href="#">Turn autoload off</a><span class="spinner"></span>';
 
             default:
                 return isset( $item->$column_name ) ? $item->$column_name : '';
@@ -551,7 +551,6 @@ class AHO_Options_List_Table extends WP_List_Table {
             'option_value' => __( 'Value', 'a-healthier-option' ),
             'autoload'     => __( 'Autoload', 'a-healthier-option' ),
             'size'         => __( 'Size (in bytes)', 'a-healthier-option' ),
-
         );
 
         return $columns;
@@ -612,7 +611,6 @@ class AHO_Options_List_Table extends WP_List_Table {
             $args['orderby'] = $_REQUEST['orderby'];
             $args['order']   = $_REQUEST['order'] ;
         }
-
 
         $this->items  = aho_get_all_options( $args );
 
