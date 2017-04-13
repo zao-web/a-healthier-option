@@ -3,7 +3,7 @@
 Plugin Name: A Healthier Option
 Description: Ever had an unweildy options table slow you down and cause crazy errors? Maybe you have, but don't know it? A Healther Option helps your options table get back into shape.
 Version: 0.1.0
-Author: Zao
+Author: Zao, Lisa League
 Author URI: https://zao.is/
 License: GPLv2 or later
 Text Domain: a-healthier-option
