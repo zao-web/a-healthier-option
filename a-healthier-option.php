@@ -503,11 +503,11 @@ class AHO_Options_List_Table extends WP_List_Table {
         _e( 'No options found', 'a-healthier-option' );
     }
 
-	public function get_sortable_columns() {
+	protected function get_sortable_columns() {
 		return array(
-			array( 'option_name', false ),
-			array( 'autoload', false ),
-			array( 'size', false )
+			'option_name' => array( 'option_name', true ),
+			'autoload'    => array( 'autoload', true ),
+			'size'        => array( 'size', true )
 		);
 	}
 
