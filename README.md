@@ -19,7 +19,8 @@ inform site administrators when there is an issue, empower them to fix the issue
  - add daily cron check to run cleanup routines.
  - Create interface for manual intervention, along with admin bar alert (e.g. comments)
  - On manual intervention page, show problematic options that are being autoloaded with ability to change the autoload value.
- - Add information about the database type (MyISAM vs. InnoDB). InnoDB performance can be drastically improved by adding an index to the autoload column, while MyISAM appears to degrade with the same index.
-  - Add information about total number of rows. While this may vary greatly based on the number of active plugins, if you have an options table with 50,000 options, or 500,000, or 5,000,000 (we've seen it all) - there's a problem somewhere.
+- Hook up edit/delete functionality in list table
+- Hook up autoload toggling in list table
+- Nonce/cap checks, etc. 
 
 Helpful : https://10up.com/blog/2017/wp-options-table/
