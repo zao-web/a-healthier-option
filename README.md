@@ -17,10 +17,7 @@ inform site administrators when there is an issue, empower them to fix the issue
 
  - Support Memcached + Redis bucket checking out of the box (memcache_get_stats)
  - add daily cron check to run cleanup routines.
- - Create interface for manual intervention, along with admin bar alert (e.g. comments)
- - On manual intervention page, show problematic options that are being autoloaded with ability to change the autoload value.
-- Hook up edit/delete functionality in list table
-- Hook up autoload toggling in list table
-- Nonce/cap checks, etc. 
+ -  Add admin bar alert (ala comments)
+ - Nonce checks etc.
 
 Helpful : https://10up.com/blog/2017/wp-options-table/
