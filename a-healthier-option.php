@@ -169,6 +169,8 @@ function aho_settings_section_callback() {
 		// Index / engine toggles
 		$( '.aho-action-submit' ).on( 'click', function(evt) {
 			var $t = $( this );
+			var $p = $t.parent();
+			$t.after( '<div style="float:none;" class="spinner is-active"></div>' );
 			evt.preventDefault();
 			$.post(
 				ajaxurl,
@@ -178,7 +180,8 @@ function aho_settings_section_callback() {
 				},
 				function( response ) {
 					if ( response.success ) {
-						$t.parent.text( 'No action required.' );
+						$p.text( 'Autoload Index Added.' );
+						$p.find( '.spinner' ).remove();
 					}
 				},
 				'json'
@@ -658,7 +661,7 @@ class AHO_Options_List_Table extends WP_List_Table {
 			$actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', $url, $item->option_name, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 		}
 
-        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'tools.php?page=a_healthier_option&action=view&id=' . $item->option_id ), $item->option_name, $this->row_actions( $actions ) );
+        return sprintf( '<a href="%1$s"><strong>%2$s</strong></a> %3$s', admin_url( 'tools.php?page=a_healthier_option&action=view&id=' . $item->option_name ), $item->option_name, $this->row_actions( $actions ) );
     }
 
     /**
@@ -719,6 +722,12 @@ function aho_process_actions() {
 
 	if ( ! isset( $_REQUEST['action'] ) ) {
 		return;
+	}
+
+	if ( isset( $_GET['action'] ) && 'view' === $_GET['action'] && isset( $_GET['id'] ) ) {
+		$name = sanitize_text_field( $_GET['id'] );
+		$css  = '<style type="text/css">body#error-page {margin: 1.5em auto;padding: .5em 2em 1em;max-width: 90%;}</style>';
+		wp_die( $css . '<h1>Option: '. $name .'</h1><xmp>'. print_r( get_option( $name ) , true ) .'</xmp>', $name );
 	}
 
 	if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] && isset( $_GET['id'] ) ) {
