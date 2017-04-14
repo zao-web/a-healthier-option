@@ -81,12 +81,14 @@ function aho_autoload_column_is_indexed() {
 	return in_array( 'autoload', $indicies, true );
 }
 
-function aho_turn_off_autoload( $option_name ) {
+function aho_toggle_autoload( $option_name, $current_value ) {
 	global $wpdb;
+
+	$value = 'no' === $current_value ? 'yes' : 'no';
 
 	return $wpdb->update(
 		$wpdb->options,
-		array( 'autoload' => 'no' ),
+		array( 'autoload'    => $value       ),
 		array( 'option_name' => $option_name ),
 		array( '%s' ),
 		array( '%s' )
@@ -144,22 +146,24 @@ function aho_settings_section_callback() {
 
 		// Autoload toggles
 		$( '.autoload-toggle' ).on( 'click', function( evt ) {
-			var $t = $( this );
+			var $t = $( this ), cv = $t.data( 'current-value' );
+
 			evt.preventDefault();
 
 			$t.siblings( '.spinner' ).css( 'visibility', 'visible' );
 			$.post(
 				ajaxurl,
 				{
-					action      : 'aho_process_actions',
-					aho_action  : 'autoload_toggle',
-					option_name : $t.data( 'option-name' )
+					action        : 'aho_process_actions',
+					aho_action    : 'autoload_toggle',
+					option_name   : $t.data( 'option-name' ),
+					current_value : cv,
 				},
 				function( response ) {
 					$t.siblings( '.spinner' ).hide();
 					if ( response.success ) {
-						$t.siblings( '.autoload-text' ).text( 'no' );
-						$t.remove();
+						var text = 'no' === cv ? 'yes' : 'no';
+						$t.siblings( '.autoload-text' ).text( text );
 					}
 				},
 				'json'
@@ -620,7 +624,8 @@ class AHO_Options_List_Table extends WP_List_Table {
                 return number_format( mb_strlen( $item->option_value ) );
 
             case 'autoload':
-                return 'no' === $item->autoload ? $item->autoload  : '<span class="autoload-text">' . $item->autoload . '</span><br /><a class="autoload-toggle" data-option-name="' . $item->option_name . '"href="#">Turn autoload off</a><span class="spinner"></span>';
+
+                return '<span class="autoload-text">' . $item->autoload . '</span><br /><a class="autoload-toggle" data-current-value="' . $item->autoload . '" data-option-name="' . $item->option_name . '"href="#">Toggle</a><span class="spinner"></span>';
 
             default:
                 return isset( $item->$column_name ) ? $item->$column_name : '';
@@ -790,7 +795,7 @@ function aho_process_actions() {
 
 		case 'autoload_toggle':
 			if ( isset( $_REQUEST['option_name'] ) ) {
-				$success = aho_turn_off_autoload( $_REQUEST['option_name'] );
+				$success = aho_toggle_autoload( $_REQUEST['option_name'], $_REQUEST['current_value'] );
 			}
 			break;
 
@@ -812,6 +817,8 @@ function aho_process_actions() {
 	}
 
 	wp_send_json_error();
+
 }
+
 add_action( 'load-tools_page_a_healthier_option', 'aho_process_actions' );
-add_action( 'wp_ajax_aho_process_actions', 'aho_process_actions' );
+add_action( 'wp_ajax_aho_process_actions'       , 'aho_process_actions' );
