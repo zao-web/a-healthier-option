@@ -496,6 +496,8 @@ function aho_get_health_color() {
 }
 
 function aho_options_page() {
+	$list_table = new AHO_Options_List_Table();
+
 	?>
 
 	<div class="wrap">
@@ -508,7 +510,6 @@ function aho_options_page() {
 	    <form method="post" action="">
 	        <input type="hidden" name="page" value="aho_list_table">
 	        <?php
-		        $list_table = new AHO_Options_List_Table();
 		        $list_table->prepare_items();
 		        $list_table->display();
 	        ?>
@@ -673,7 +674,60 @@ class AHO_Options_List_Table extends WP_List_Table {
      */
     public function column_cb( $item ) {
         return sprintf(
-            '<input type="checkbox" name="option_id[]" value="%d" />', $item->option_id
+            '<input type="checkbox" name="%1$s[]" value="%2$s" />',
+            $this->_args['singular'],
+            $item->option_name
+        );
+    }
+
+	public function delete_options() {
+
+		$options = array();
+
+		if ( isset( $_GET['id'] ) ) {
+			$options = (array) $_GET['id'];
+		}
+
+		if ( isset( $_REQUEST['option'] ) ) {
+			$options = (array) $_REQUEST['option'];
+		}
+
+		foreach ( $options as $option ) {
+			delete_option( $option );
+		}
+	}
+
+	public function process_bulk_actions() {
+
+		switch ( $this->current_action() ) {
+			case 'delete':
+				$this->delete_options();
+				wp_safe_redirect( remove_query_arg( array( 'action', 'id' ) ) );
+				exit;
+				break;
+
+			case 'view':
+				$name = sanitize_text_field( $_GET['id'] );
+				$css  = '<style type="text/css">body#error-page {margin: 1.5em auto;padding: .5em 2em 1em;max-width: 90%;}</style>';
+				wp_die( $css . '<h1>Option: '. $name .'</h1><xmp>'. print_r( get_option( $name ) , true ) .'</xmp>', $name );
+				break;
+
+			default:
+				# code...
+				break;
+		}
+
+		if ( isset( $_GET['action'] ) && 'view' === $_GET['action'] && isset( $_GET['id'] ) ) {
+			$name = sanitize_text_field( $_GET['id'] );
+			$css  = '<style type="text/css">body#error-page {margin: 1.5em auto;padding: .5em 2em 1em;max-width: 90%;}</style>';
+			wp_die( $css . '<h1>Option: '. $name .'</h1><xmp>'. print_r( get_option( $name ) , true ) .'</xmp>', $name );
+		}
+
+	}
+
+	public function get_bulk_actions() {
+        return array(
+            'delete' => __( 'Delete' ),
         );
     }
 
@@ -716,24 +770,14 @@ class AHO_Options_List_Table extends WP_List_Table {
 
 function aho_process_actions() {
 
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( $_REQUEST  );
-	}
-
-	if ( ! isset( $_REQUEST['action'] ) ) {
+	if ( ! wp_doing_ajax() ) {
+		$list_table = new AHO_Options_List_Table();
+		$list_table->process_bulk_actions();
 		return;
 	}
 
-	if ( isset( $_GET['action'] ) && 'view' === $_GET['action'] && isset( $_GET['id'] ) ) {
-		$name = sanitize_text_field( $_GET['id'] );
-		$css  = '<style type="text/css">body#error-page {margin: 1.5em auto;padding: .5em 2em 1em;max-width: 90%;}</style>';
-		wp_die( $css . '<h1>Option: '. $name .'</h1><xmp>'. print_r( get_option( $name ) , true ) .'</xmp>', $name );
-	}
-
-	if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] && isset( $_GET['id'] ) ) {
-		delete_option( $_GET['id'] );
-		wp_safe_redirect( remove_query_arg( array( 'action', 'id' ) ) );
-		exit;
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error();
 	}
 
 	if ( ! isset( $_REQUEST['aho_action'] ) ) {
@@ -768,8 +812,6 @@ function aho_process_actions() {
 	}
 
 	wp_send_json_error();
-
 }
-
-add_action( 'wp_ajax_aho_process_actions'       , 'aho_process_actions' );
 add_action( 'load-tools_page_a_healthier_option', 'aho_process_actions' );
+add_action( 'wp_ajax_aho_process_actions', 'aho_process_actions' );
