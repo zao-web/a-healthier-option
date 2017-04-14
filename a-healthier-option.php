@@ -169,6 +169,8 @@ function aho_settings_section_callback() {
 		// Index / engine toggles
 		$( '.aho-action-submit' ).on( 'click', function(evt) {
 			var $t = $( this );
+			var $p = $t.parent();
+			$t.after( '<div style="float:none;" class="spinner is-active"></div>' );
 			evt.preventDefault();
 			$.post(
 				ajaxurl,
@@ -178,7 +180,8 @@ function aho_settings_section_callback() {
 				},
 				function( response ) {
 					if ( response.success ) {
-						$t.parent.text( 'No action required.' );
+						$p.text( 'Autoload Index Added.' );
+						$p.find( '.spinner' ).remove();
 					}
 				},
 				'json'
