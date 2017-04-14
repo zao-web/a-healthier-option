@@ -653,11 +653,7 @@ class AHO_Options_List_Table extends WP_List_Table {
 
 		if ( ! in_array( $item->option_name, aho_core_options(), true ) ) {
 
-			$url = admin_url( 'tools.php?page=a_healthier_option&action=delete&id=' . $item->option_name );
-
-			if ( isset( $_GET['paged'] ) ) {
-				$url = add_query_arg( 'paged', absint( $_GET['paged'] ), $url );
-			}
+			$url = add_query_arg( array( 'id' => $item->option_name, 'action' => 'delete' ) );
 
 			$actions['delete'] = sprintf( '<a href="%s" class="submitdelete" data-id="%d" title="%s">%s</a>', $url, $item->option_name, __( 'Delete this option', 'a-healthier-option' ), __( 'Delete', 'a-healthier-option' ) );
 		}
