@@ -23,3 +23,6 @@ inform site administrators when there is an issue, empower them to fix the issue
   - Add information about total number of rows. While this may vary greatly based on the number of active plugins, if you have an options table with 50,000 options, or 500,000, or 5,000,000 (we've seen it all) - there's a problem somewhere.
 
 Helpful : https://10up.com/blog/2017/wp-options-table/
+
+# NOTE
+This plugin was originally developed with the intention of being a test. We give back-end developer candidates access to this plugin as a three-hour trial project. They refactor it, we judge their skill based on how they do.  The `master` branch of this _will_ be updated and refactored, and the `to-be-refactored` branch will essentially live on as this test.  You will note - they are basically the same right now.
