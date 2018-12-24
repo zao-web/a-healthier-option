@@ -1,0 +1,8 @@
+{
+    "name": "zao-web/a-healthier-option",
+    "type": "wordpress-plugin",
+    "description": "Plugin to manage the size of the options in WordPress.",
+    "require": {
+        "php": "^7.1"
+    }
+}
